@@ -87,6 +87,42 @@ def crossover(parents, population_size):
     return new_generation
 
 
+def read_input(steiner_vertices: list, terminal_vertices: list, edges: list):
+    f = open("steiner_in_test.txt")
+    sv_num, tv_num, edge_num = f.readline()[:5].split(" ")
+
+    for i in range(int(sv_num)):
+        line = f.readline()[:3].split(" ")
+        steiner_vertices.append((line[0], line[1]))
+
+    for i in range(int(tv_num)):
+        line = f.readline()[:3].split(" ")
+        terminal_vertices.append((line[0], line[1]))
+
+    for i in range(int(edge_num)):
+        line = f.readline()[:3].split(" ")
+        edges.append((line[0], line[1]))
+
+
+def create_result(chromosome: list, edges_cost: list):
+    """
+    creates final result file
+    :param chromosome: best chromosome (problem answer)
+    :param edges_cost: edges cost as we calculated before
+    :return: None
+    """
+    cost_sum = 0
+    f = open("steiner_out.txt", "w")
+
+    for i in range(len(chromosome)):
+        if chromosome[i] == 1:
+            cost_sum += edges_cost[i]
+            f.write(str(i))
+
+    f.write(str(cost_sum))
+    f.close()
+
+
 def main():
     """
     the main function
@@ -96,53 +132,59 @@ def main():
     population = []
 
     # problem variables
-    generations_num: int
-    population_size: int
-    tournament_size: int
+    sv_num: int  # number of steiner vertices
+    tv_num: int  # number of terminal vertices
+    edge_num: int  # number of edges
+    steiner_vertices = []
+    terminal_vertices = []
+    edges = []
+    edges_cost = []
+
+    # problem constants
+    cal_fitness_num = 1000
+    population_size = 20
+    tournament_size = 4
     mutation_rate: float
 
     # fitnesses values
     fitnesses = []
+
+    read_input(steiner_vertices, terminal_vertices, edges)
+    print(steiner_vertices, terminal_vertices, edges)
+    sv_num, tv_num, edge_num = len(steiner_vertices), len(terminal_vertices), len(edges)
+    print(sv_num, tv_num, edge_num)
 
     # fitnesses attributes
     # max_fitnesses = []
     # min_fitnesses = []
     # avg_fitnesses = []
 
-    # getting values
-    population_size = int(input("Enter population size: "))
-    tournament_size = int(input("Enter tournament size: "))
-    mutation_rate = float(input("Enter mutation rate: "))
-    generations_num = int(input("Enter generation number: "))
-
-    # calculating mutation number
-    mutation_num = population_size * chromosome_size * mutation_rate
-
     # initializing population
-    for i in range(population_size):
-        genes = []
-        for j in range(chromosome_size):
-            genes.append(randrange(0, colors_num))
-        population.append(Chromosome(genes))
-
-    for k in range(generations_num):
-        parents = parent_selection(population, tournament_size)  # step 3
-        new_generation = crossover(parents, population_size)  # step 4
-        for i in range(int(mutation_num)):
-            new_generation[randrange(0, len(new_generation))].mutation()  # step 5
-
-        # calculating fitnesses L340
-        fitnesses.clear()
-        for x in new_generation:
-            fitnesses.append(x.fitness())
-        print(max(fitnesses))
-        print(min(fitnesses))
-        print(sum(fitnesses) / len(fitnesses))
-
-        population = new_generation  # step 6
-
-    # printing results
-    print("\n\nSearch Completed!")
+    # for i in range(population_size):
+    #     genes = []
+    #     for j in range(chromosome_size):
+    #         genes.append(randrange(0, colors_num))
+    #     population.append(Chromosome(genes))
+    #
+    # # evaluation
+    # for k in range(int(cal_fitness_num / population_size)):
+    #     parents = parent_selection(population, tournament_size)  # step 3
+    #     new_generation = crossover(parents, population_size)  # step 4
+    #     # for i in range(int(mutation_num)):
+    #     #     new_generation[randrange(0, len(new_generation))].mutation()  # step 5
+    #
+    #     # calculating fitnesses L340
+    #     fitnesses.clear()
+    #     for x in new_generation:
+    #         fitnesses.append(x.fitness())
+    #     print(max(fitnesses))
+    #     print(min(fitnesses))
+    #     print(sum(fitnesses) / len(fitnesses))
+    #
+    #     population = new_generation  # step 6
+    #
+    # # printing results
+    # print("\n\nSearch Completed!")
     # for i in range(generations_num):
     #     print("\nGeneration #" + str(i + 1) + ":\nMax Fitness: " + str(max_fitnesses[i]) + "\nMin Fitness: " +
     #           str(min_fitnesses[i]) + "\nAverage Fitness: " + str(avg_fitnesses[i]))
