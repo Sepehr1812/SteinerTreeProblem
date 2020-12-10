@@ -4,11 +4,6 @@ This program performs Genetic Algorithm for Steiner Tree Problem
 from math import sqrt
 from random import randrange
 
-# problem values
-chromosome_size = 31
-edges_num = 74
-colors_num = 4
-
 
 class Chromosome:
     """
@@ -19,30 +14,35 @@ class Chromosome:
     def __init__(self, gen_in):
         self.gens = gen_in
 
-    def mutation(self):
+    def mutate(self):
         """
-        mutates the chromosome
-        :return: nothing
+        mutates the chromosome by changing a random gen to another digit
         """
-        random_gen = randrange(0, chromosome_size)
-        self.gens[random_gen] = randrange(0, colors_num)
+        random_gen = randrange(0, len(self.gens))
+        self.gens[random_gen] = abs(self.gens[random_gen] - 1)
 
-    def get_sub_chromosome(self, first_half):
+    def get_sub_chromosome(self, cut_index: int, first_part: bool):
         """
         generates sub chromosomes for crossover operation
-        :param first_half: specifies we need first half of chromosome or not
+        :param cut_index the index we generate sub chromosome from or until there
+        :param first_part: specifies we need first part of chromosome or not
         :return: the sub chromosome
         """
-        if first_half:
-            return self.gens[0:15]
+        if first_part:
+            return self.gens[:cut_index]
         else:
-            return self.gens[15:31]
+            return self.gens[cut_index:]
 
-    def fitness(self):
+    def fitness(self, edge_costs):
         """
-        calculates the fitness of the chromosome
         :return: fitness of chromosome
         """
+        f = 0
+        for i in range(len(self.gens)):
+            if self.gens[i] == 1:
+                f += edge_costs[i]
+
+        return f
 
 
 def parent_selection(population, tournament_size):
