@@ -1,6 +1,7 @@
 """
 This program performs Genetic Algorithm for Steiner Tree Problem
 """
+from math import sqrt
 from random import randrange
 
 # problem values
@@ -42,7 +43,6 @@ class Chromosome:
         calculates the fitness of the chromosome
         :return: fitness of chromosome
         """
-
 
 
 def parent_selection(population, tournament_size):
@@ -87,21 +87,39 @@ def crossover(parents, population_size):
     return new_generation
 
 
+def calculate_costs(all_vertices: list, edges: list, edge_costs: list):
+    """
+    calculates cost of each edge and set the result in edge_costs
+    :param all_vertices: all vertices list
+    :param edges: all edges list
+    """
+    for i in edges:
+        a, b = i
+        edge_costs.append(
+            sqrt(abs(all_vertices[a][0] - all_vertices[b][0]) + abs(all_vertices[a][1] - all_vertices[b][1])))
+
+
 def read_input(steiner_vertices: list, terminal_vertices: list, edges: list):
+    """
+    reads from input file and fills the arrays we need
+    :param steiner_vertices: steiner vertices coordinates
+    :param terminal_vertices: terminal vertices coordinates
+    :param edges: edges start and end vertices
+    """
     f = open("steiner_in_test.txt")
     sv_num, tv_num, edge_num = f.readline()[:5].split(" ")
 
     for i in range(int(sv_num)):
         line = f.readline()[:3].split(" ")
-        steiner_vertices.append((line[0], line[1]))
+        steiner_vertices.append((int(line[0]), int(line[1])))
 
     for i in range(int(tv_num)):
         line = f.readline()[:3].split(" ")
-        terminal_vertices.append((line[0], line[1]))
+        terminal_vertices.append((int(line[0]), int(line[1])))
 
     for i in range(int(edge_num)):
         line = f.readline()[:3].split(" ")
-        edges.append((line[0], line[1]))
+        edges.append((int(line[0]), int(line[1])))
 
 
 def create_result(chromosome: list, edges_cost: list):
@@ -109,7 +127,6 @@ def create_result(chromosome: list, edges_cost: list):
     creates final result file
     :param chromosome: best chromosome (problem answer)
     :param edges_cost: edges cost as we calculated before
-    :return: None
     """
     cost_sum = 0
     f = open("steiner_out.txt", "w")
@@ -137,8 +154,9 @@ def main():
     edge_num: int  # number of edges
     steiner_vertices = []
     terminal_vertices = []
+    all_vertices = []
     edges = []
-    edges_cost = []
+    edge_costs = []
 
     # problem constants
     cal_fitness_num = 1000
@@ -152,7 +170,13 @@ def main():
     read_input(steiner_vertices, terminal_vertices, edges)
     print(steiner_vertices, terminal_vertices, edges)
     sv_num, tv_num, edge_num = len(steiner_vertices), len(terminal_vertices), len(edges)
+    all_vertices.extend(steiner_vertices)
+    all_vertices.extend(terminal_vertices)
     print(sv_num, tv_num, edge_num)
+    print(all_vertices)
+
+    calculate_costs(all_vertices, edges, edge_costs)
+    print(edge_costs)
 
     # fitnesses attributes
     # max_fitnesses = []
