@@ -53,7 +53,6 @@ class Chromosome:
         :param edges: edges list
         :return: {True} if the graph with selected edges in this chromosome is connected, {False} otherwise
         """
-        print(terminal_vertices_num)
         seen_vertices = []
         seen_terminal_vertices_number = 0
 
@@ -201,6 +200,7 @@ def main():
     all_vertices = []
     edges = []
     edge_costs = []
+    terminal_vertices_num: list
 
     # problem constants
     cal_fitness_num = 1000
@@ -222,8 +222,11 @@ def main():
     calculate_costs(all_vertices, edges, edge_costs)
     print(edge_costs)
 
+    terminal_vertices_num = list(range(sv_num, sv_num + tv_num))
+    print(terminal_vertices_num)
+
     c = Chromosome([0, 1, 1, 0])
-    print(c.is_connected(list(range(sv_num, sv_num + tv_num)), edges))
+    print(c.is_connected(terminal_vertices_num, edges))
 
     # fitnesses attributes
     # max_fitnesses = []
