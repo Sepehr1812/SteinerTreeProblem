@@ -1,7 +1,7 @@
 """
 This program performs Genetic Algorithm for Steiner Tree Problem
 """
-from math import sqrt
+from math import sqrt, log2
 from random import randrange, randint, uniform
 from typing import List
 
@@ -92,16 +92,22 @@ class Chromosome:
 def parent_selection(population: List[Chromosome], parents_num: int, terminal_vertices_num: list, edges: list,
                      edge_costs: list):
     """
-    selects parents
+    selects parents via fitness proportional selection - round weal
     :param population: current population
     :param parents_num: number of parents we need
     :return: parents
     """
+    parents = []
+
     fitnesses = []
     for p in population:
         fitnesses.append(p.fitness(terminal_vertices_num, edges, edge_costs))
 
     _sum = sum(fitnesses)
+    if _sum < 1:  # all fitnesses are 0
+        parents = population
+        parents.extend(population)
+        return parents
 
     # create sum fitness array
     sum_fitnesses = []
@@ -110,12 +116,10 @@ def parent_selection(population: List[Chromosome], parents_num: int, terminal_ve
         sum_fitness += fitnesses[i]
         sum_fitnesses.append(sum_fitness)
 
-    # print(sum_fitnesses)
     # choose parents due to their fitness
-    parents = []
     i = 0
     while i < parents_num:
-        rand = randint(1, _sum)
+        rand = randint(1, int(_sum))
         for j in range(len(sum_fitnesses)):
             if rand < sum_fitnesses[j]:
                 parents.append(population[j])
@@ -190,14 +194,14 @@ def mutation(population: List[Chromosome], pm: float):
 
 def calculate_costs(all_vertices: list, edges: list, edge_costs: list):
     """
-    calculates cost of each edge and set the result in edge_costs
+    calculates log in base 2 of cost of each edge and set the result in edge_costs
     :param all_vertices: all vertices list
     :param edges: all edges list
     """
     for i in edges:
         a, b = i
         edge_costs.append(
-            sqrt(abs(all_vertices[a][0] - all_vertices[b][0]) + abs(all_vertices[a][1] - all_vertices[b][1])))
+            log2(sqrt(abs(all_vertices[a][0] - all_vertices[b][0]) + abs(all_vertices[a][1] - all_vertices[b][1]))))
 
 
 def read_input(steiner_vertices: list, terminal_vertices: list, edges: list):
@@ -207,19 +211,19 @@ def read_input(steiner_vertices: list, terminal_vertices: list, edges: list):
     :param terminal_vertices: terminal vertices coordinates
     :param edges: edges start and end vertices
     """
-    f = open("steiner_in_test.txt")
-    sv_num, tv_num, edge_num = f.readline()[:5].split(" ")
+    f = open("steiner_in.txt")
+    sv_num, tv_num, edge_num = f.readline().split("\n")[0].split(" ")
 
     for i in range(int(sv_num)):
-        line = f.readline()[:3].split(" ")
+        line = f.readline().split("\n")[0].split(" ")
         steiner_vertices.append((int(line[0]), int(line[1])))
 
     for i in range(int(tv_num)):
-        line = f.readline()[:3].split(" ")
+        line = f.readline().split("\n")[0].split(" ")
         terminal_vertices.append((int(line[0]), int(line[1])))
 
     for i in range(int(edge_num)):
-        line = f.readline()[:3].split(" ")
+        line = f.readline().split("\n")[0].split(" ")
         edges.append((int(line[0]), int(line[1])))
 
 
@@ -234,7 +238,7 @@ def create_result(chromosome: Chromosome, edges_cost: list):
 
     for i in range(len(chromosome.gens)):
         if chromosome.gens[i] == 1:
-            cost_sum += edges_cost[i]
+            cost_sum += pow(2, edges_cost[i])
             f.write(str(i) + "\n")
 
     f.write(str(cost_sum))
@@ -261,39 +265,32 @@ def main():
 
     # problem constants
     cal_fitness_num = 1000
-    population_size = 20
-    parents_num = 40  # number of parents in each parents selection
+    population_size = 50
+    parents_num = 100  # number of parents in each parents selection
     tournament_size = 3
-    pc = 0.8
-    pm = 0.01
+    pc = 0.8  # crossover probability
+    pm = 0.01  # mutation probability
 
     # fitnesses values
     fitnesses = []
 
+    # initial variables
     read_input(steiner_vertices, terminal_vertices, edges)
-    print(steiner_vertices, terminal_vertices, edges)
     sv_num, tv_num, edge_num = len(steiner_vertices), len(terminal_vertices), len(edges)
     all_vertices.extend(steiner_vertices)
     all_vertices.extend(terminal_vertices)
-    print(sv_num, tv_num, edge_num)
-    print(all_vertices)
 
     calculate_costs(all_vertices, edges, edge_costs)
-    print(edge_costs)
-
     terminal_vertices_num = list(range(sv_num, sv_num + tv_num))
-    print(terminal_vertices_num)
-
-    c = Chromosome([0, 1, 1, 0])
-    print(c.is_connected(terminal_vertices_num, edges))
 
     # initializing population
-    for i in range(population_size):
+    # adding an optional chromosome to avoid all zero fitnesses
+    population.append(Chromosome([0, 1, 1, 1] * int(edge_num / 4)))
+    for i in range(population_size - 1):
         genes = []
         for j in range(edge_num):
             genes.append(randint(0, 1))
         population.append(Chromosome(genes))
-        print(genes, end=", ")
 
     # evaluation
     for k in range(int(cal_fitness_num / population_size)):
@@ -308,7 +305,6 @@ def main():
         # calculating fitnesses
         fitnesses.clear()
         for p in population:
-            print(p.gens, end=", ")
             fitnesses.append(p.fitness(terminal_vertices_num, edges, edge_costs))
 
         print("\nGeneration #" + str(k + 1) + ":")
@@ -327,8 +323,8 @@ def main():
             best_chromosome = p
 
     # printing results
-    print("\n\nFinished!")
-    print("the best chromosome is " + str(best_chromosome.gens))
+    print("\n\nTermination Condition Reached!")
+    print("The Best Chromosome Genome in the Last Generation is " + str(best_chromosome.gens))
 
     # creating final file
     create_result(best_chromosome, edge_costs)
