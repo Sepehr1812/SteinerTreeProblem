@@ -2,7 +2,11 @@
 This program performs Genetic Algorithm for Steiner Tree Problem
 """
 from math import sqrt
-from random import randrange
+from random import randrange, randint, uniform
+from typing import List
+
+# constants
+pc = 0.8
 
 
 class Chromosome:
@@ -35,14 +39,14 @@ class Chromosome:
 
     def fitness(self, terminal_vertices_num: list, edges: list, edge_costs: list):
         """
-        :return: fitness of chromosome. -1 if self is not connected
+        :return: fitness of chromosome. 0 if self is not connected
         """
         if not self.is_connected(terminal_vertices_num, edges):
-            return -1
+            return 0
 
         f = 0
         for i in range(len(self.gens)):
-            if self.gens[i] == 1:
+            if self.gens[i] == 0:
                 f += edge_costs[i]
 
         return f
@@ -88,32 +92,67 @@ class Chromosome:
         return False
 
 
-def parent_selection(population, tournament_size):
+def parent_selection(population: List[Chromosome], parents_num: int, terminal_vertices_num: list, edges: list,
+                     edge_costs: list):
     """
-    selects parents from population
-    :param population: the initial population
-    :param tournament_size: the tournament size
-    :return: parents array
+    selects parents
+    :param population: current population
+    :param parents_num: number of parents we need
+    :return: parents
     """
-    parents = []
-    loop_cond = int(len(population) / tournament_size)
-    for k in range(loop_cond):
-        best_fitness = -1  # a negative infinite number for this variable
-        best_chromosome = Chromosome(None)
-        for i in range(tournament_size):
-            p_index = randrange(0, len(population))
-            selected = population[p_index]
-            if selected.fitness() > best_fitness:
-                best_fitness = selected.fitness()
-                best_chromosome = selected
-            population.remove(selected)
+    fitnesses = []
+    for p in population:
+        fitnesses.append(p.fitness(terminal_vertices_num, edges, edge_costs))
 
-        parents.append(best_chromosome)
+    _sum = sum(fitnesses)
+
+    sum_fitnesses = []
+    sum_fitness = 0
+    for i in range(len(fitnesses)):
+        sum_fitness += fitnesses[i]
+        sum_fitnesses.append(sum_fitness)
+
+    # print(sum_fitnesses)
+    parents = []
+    i = 0
+    while i < parents_num:
+        rand = randint(1, _sum)
+        for j in range(len(sum_fitnesses)):
+            if rand < sum_fitnesses[j]:
+                parents.append(population[j])
+                i += 1
+                break
 
     return parents
 
 
-def crossover(parents, population_size):
+def child_selection(population: list, tournament_size: int, terminal_vertices_num: list, edges: list, edge_costs: list):
+    """
+    selects children from population
+    :param population: current population
+    :return: children array
+    """
+    children = []
+    tournament_number = int(len(population) / tournament_size)
+    for k in range(tournament_number):
+        best_fitness = -1  # minimum number for this variable
+        best_chromosome = Chromosome(None)
+        for i in range(tournament_size):
+            p_index = randrange(0, len(population))
+            selected: Chromosome = population[p_index]
+
+            f = selected.fitness(terminal_vertices_num, edges, edge_costs)
+            if f > best_fitness:
+                best_fitness = f
+                best_chromosome = selected
+            population.remove(selected)
+
+        children.append(best_chromosome)
+
+    return children
+
+
+def crossover(parents: List[Chromosome], population_size: int, edge_num: int):
     """
     performs crossover operation
     :param parents: parents array
@@ -122,10 +161,23 @@ def crossover(parents, population_size):
     """
     new_generation = []
 
-    for i in range(population_size):
-        new_genes = parents[randrange(0, len(parents))].get_sub_chromosome(True)
-        new_genes.extend(parents[randrange(0, len(parents))].get_sub_chromosome(False))
-        new_generation.append(Chromosome(new_genes))
+    i = 0
+    while i < population_size:
+        p = uniform(0, 1)
+        a, b = parents[i * 2], parents[i * 2 + 1]
+        if p < pc:
+            new_genes = a.get_sub_chromosome(int(p * edge_num), True)
+            new_genes.extend(b.get_sub_chromosome(int(p * edge_num), False))
+            new_generation.append(Chromosome(new_genes))
+
+            new_genes = b.get_sub_chromosome(int(p * edge_num), True)
+            new_genes.extend(a.get_sub_chromosome(int(p * edge_num), False))
+            new_generation.append(Chromosome(new_genes))
+        else:
+            new_generation.append(a)
+            new_generation.append(b)
+
+        i += 1
 
     return new_generation
 
@@ -205,7 +257,8 @@ def main():
     # problem constants
     cal_fitness_num = 1000
     population_size = 20
-    tournament_size = 4
+    parents_num = 40
+    tournament_size = 3
     mutation_rate: float
 
     # fitnesses values
@@ -234,28 +287,32 @@ def main():
     # avg_fitnesses = []
 
     # initializing population
-    # for i in range(population_size):
-    #     genes = []
-    #     for j in range(chromosome_size):
-    #         genes.append(randrange(0, colors_num))
-    #     population.append(Chromosome(genes))
-    #
-    # # evaluation
-    # for k in range(int(cal_fitness_num / population_size)):
-    #     parents = parent_selection(population, tournament_size)  # step 3
-    #     new_generation = crossover(parents, population_size)  # step 4
-    #     # for i in range(int(mutation_num)):
-    #     #     new_generation[randrange(0, len(new_generation))].mutation()  # step 5
-    #
-    #     # calculating fitnesses L340
-    #     fitnesses.clear()
-    #     for x in new_generation:
-    #         fitnesses.append(x.fitness())
-    #     print(max(fitnesses))
-    #     print(min(fitnesses))
-    #     print(sum(fitnesses) / len(fitnesses))
-    #
-    #     population = new_generation  # step 6
+    for i in range(population_size):
+        genes = []
+        for j in range(edge_num):
+            genes.append(randint(0, 1))
+        population.append(Chromosome(genes))
+        print(genes, end=", ")
+
+    # evaluation
+    for k in range(int(cal_fitness_num / population_size)):
+        parents = parent_selection(population, parents_num, terminal_vertices_num, edges, edge_costs)
+        new_generation = crossover(parents, population_size, edge_num)
+        # mutation
+        new_generation.extend(population)
+        population = child_selection(new_generation, tournament_size, terminal_vertices_num, edges, edge_costs)
+        # for i in range(int(mutation_num)):
+        #     new_generation[randrange(0, len(new_generation))].mutation()
+
+        # calculating fitnesses
+        fitnesses.clear()
+        for p in population:
+            fitnesses.append(p.fitness(terminal_vertices_num, edges, edge_costs))
+
+        print("\nGeneration #" + str(k + 1) + ":")
+        print("Best Fitness: " + str(max(fitnesses)))
+        print("Worst Fitness: " + str(min(fitnesses)))
+        print("Average Fitness: " + str(sum(fitnesses) / len(fitnesses)))
     #
     # # printing results
     # print("\n\nSearch Completed!")
