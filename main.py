@@ -44,6 +44,41 @@ class Chromosome:
 
         return f
 
+    def is_connected(self, terminal_vertices_num: list, edges: list):
+        """
+        :param terminal_vertices_num: terminal vertices number list
+        :param edges: edges list
+        :return: {True} if the graph with selected edges in this chromosome is connected, {False} otherwise
+        """
+        seen_vertices = []
+        seen_terminal_vertices_number = 0
+
+        seen_vertices.append(terminal_vertices_num[0])
+        seen_terminal_vertices_number += 1
+        j = 0
+        while True:
+            v = seen_vertices[j]
+            for i in edges:
+                if i[0] == v:
+                    if not seen_vertices.__contains__(i[1]):
+                        seen_vertices.append(i[1])
+                        if i[1] in terminal_vertices_num:
+                            seen_terminal_vertices_number += 1
+                elif i[1] == v:
+                    if not seen_vertices.__contains__(i[0]):
+                        seen_vertices.append(i[0])
+                        if i[0] in terminal_vertices_num:
+                            seen_terminal_vertices_number += 1
+
+            if seen_terminal_vertices_number == len(terminal_vertices_num):
+                return True
+
+            j += 1
+            if j >= len(seen_vertices):
+                break
+
+        return False
+
 
 def parent_selection(population, tournament_size):
     """
