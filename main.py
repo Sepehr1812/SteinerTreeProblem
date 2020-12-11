@@ -223,7 +223,7 @@ def read_input(steiner_vertices: list, terminal_vertices: list, edges: list):
         edges.append((int(line[0]), int(line[1])))
 
 
-def create_result(chromosome: list, edges_cost: list):
+def create_result(chromosome: Chromosome, edges_cost: list):
     """
     creates final result file
     :param chromosome: best chromosome (problem answer)
@@ -232,10 +232,10 @@ def create_result(chromosome: list, edges_cost: list):
     cost_sum = 0
     f = open("steiner_out.txt", "w")
 
-    for i in range(len(chromosome)):
-        if chromosome[i] == 1:
+    for i in range(len(chromosome.gens)):
+        if chromosome.gens[i] == 1:
             cost_sum += edges_cost[i]
-            f.write(str(i))
+            f.write(str(i) + "\n")
 
     f.write(str(cost_sum))
     f.close()
@@ -315,12 +315,23 @@ def main():
         print("Best Fitness: " + str(max(fitnesses)))
         print("Worst Fitness: " + str(min(fitnesses)))
         print("Average Fitness: " + str(sum(fitnesses) / len(fitnesses)))
-    #
-    # # printing results
-    # print("\n\nSearch Completed!")
-    # for i in range(generations_num):
-    #     print("\nGeneration #" + str(i + 1) + ":\nMax Fitness: " + str(max_fitnesses[i]) + "\nMin Fitness: " +
-    #           str(min_fitnesses[i]) + "\nAverage Fitness: " + str(avg_fitnesses[i]))
+
+    # find best chromosome
+    best_chromosome = population[0]
+    best_fitness = max(fitnesses)
+    for p in population:
+        best_chromosome_fitness = best_chromosome.fitness(terminal_vertices_num, edges, edge_costs)
+        if best_chromosome_fitness == best_fitness:
+            break
+        if p.fitness(terminal_vertices_num, edges, edge_costs) > best_chromosome_fitness:
+            best_chromosome = p
+
+    # printing results
+    print("\n\nFinished!")
+    print("the best chromosome is " + str(best_chromosome.gens))
+
+    # creating final file
+    create_result(best_chromosome, edge_costs)
 
 
 if __name__ == '__main__':
