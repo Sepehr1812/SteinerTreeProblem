@@ -33,10 +33,13 @@ class Chromosome:
         else:
             return self.gens[cut_index:]
 
-    def fitness(self, edge_costs):
+    def fitness(self, terminal_vertices_num: list, edges: list, edge_costs: list):
         """
-        :return: fitness of chromosome
+        :return: fitness of chromosome. -1 if self is not connected
         """
+        if not self.is_connected(terminal_vertices_num, edges):
+            return -1
+
         f = 0
         for i in range(len(self.gens)):
             if self.gens[i] == 1:
