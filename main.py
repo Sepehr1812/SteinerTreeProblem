@@ -53,21 +53,26 @@ class Chromosome:
         seen_vertices = []
         seen_terminal_vertices_number = 0
 
+        available_edges = []
+        for i in range(len(self.gens)):
+            if self.gens[i] == 1:
+                available_edges.append(edges[i])
+
         seen_vertices.append(terminal_vertices_num[0])
         seen_terminal_vertices_number += 1
         j = 0
         while True:
             v = seen_vertices[j]
-            for i in edges:
-                if i[0] == v:
-                    if not seen_vertices.__contains__(i[1]):
-                        seen_vertices.append(i[1])
-                        if i[1] in terminal_vertices_num:
+            for e in available_edges:
+                if e[0] == v:
+                    if not seen_vertices.__contains__(e[1]):
+                        seen_vertices.append(e[1])
+                        if e[1] in terminal_vertices_num:
                             seen_terminal_vertices_number += 1
-                elif i[1] == v:
-                    if not seen_vertices.__contains__(i[0]):
-                        seen_vertices.append(i[0])
-                        if i[0] in terminal_vertices_num:
+                elif e[1] == v:
+                    if not seen_vertices.__contains__(e[0]):
+                        seen_vertices.append(e[0])
+                        if e[0] in terminal_vertices_num:
                             seen_terminal_vertices_number += 1
 
             if seen_terminal_vertices_number == len(terminal_vertices_num):
