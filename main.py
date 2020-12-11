@@ -5,9 +5,6 @@ from math import sqrt
 from random import randrange, randint, uniform
 from typing import List
 
-# constants
-pc = 0.8
-
 
 class Chromosome:
     """
@@ -106,6 +103,7 @@ def parent_selection(population: List[Chromosome], parents_num: int, terminal_ve
 
     _sum = sum(fitnesses)
 
+    # create sum fitness array
     sum_fitnesses = []
     sum_fitness = 0
     for i in range(len(fitnesses)):
@@ -113,6 +111,7 @@ def parent_selection(population: List[Chromosome], parents_num: int, terminal_ve
         sum_fitnesses.append(sum_fitness)
 
     # print(sum_fitnesses)
+    # choose parents due to their fitness
     parents = []
     i = 0
     while i < parents_num:
@@ -128,7 +127,7 @@ def parent_selection(population: List[Chromosome], parents_num: int, terminal_ve
 
 def child_selection(population: list, tournament_size: int, terminal_vertices_num: list, edges: list, edge_costs: list):
     """
-    selects children from population
+    selects children from population via Q tournament procedure
     :param population: current population
     :return: children array
     """
@@ -152,7 +151,7 @@ def child_selection(population: list, tournament_size: int, terminal_vertices_nu
     return children
 
 
-def crossover(parents: List[Chromosome], population_size: int, edge_num: int):
+def crossover(parents: List[Chromosome], population_size: int, edge_num: int, pc: float):
     """
     performs crossover operation
     :param parents: parents array
@@ -161,8 +160,7 @@ def crossover(parents: List[Chromosome], population_size: int, edge_num: int):
     """
     new_generation = []
 
-    i = 0
-    while i < population_size:
+    for i in range(population_size):
         p = uniform(0, 1)
         a, b = parents[i * 2], parents[i * 2 + 1]
         if p < pc:
@@ -177,9 +175,17 @@ def crossover(parents: List[Chromosome], population_size: int, edge_num: int):
             new_generation.append(a)
             new_generation.append(b)
 
-        i += 1
-
     return new_generation
+
+
+def mutation(population: List[Chromosome], pm: float):
+    """
+    mutates chromosomes due to pm
+    :param pm: probability of mutation
+    """
+    for i in range(len(population)):
+        if uniform(0, 1) <= pm:
+            population[i].mutate()
 
 
 def calculate_costs(all_vertices: list, edges: list, edge_costs: list):
@@ -238,7 +244,6 @@ def create_result(chromosome: list, edges_cost: list):
 def main():
     """
     the main function
-    :return: nothing
     """
     # population array
     population = []
@@ -252,14 +257,15 @@ def main():
     all_vertices = []
     edges = []
     edge_costs = []
-    terminal_vertices_num: list
+    terminal_vertices_num: list  # numbers of terminal vertices
 
     # problem constants
     cal_fitness_num = 1000
     population_size = 20
-    parents_num = 40
+    parents_num = 40  # number of parents in each parents selection
     tournament_size = 3
-    mutation_rate: float
+    pc = 0.8
+    pm = 0.01
 
     # fitnesses values
     fitnesses = []
@@ -281,11 +287,6 @@ def main():
     c = Chromosome([0, 1, 1, 0])
     print(c.is_connected(terminal_vertices_num, edges))
 
-    # fitnesses attributes
-    # max_fitnesses = []
-    # min_fitnesses = []
-    # avg_fitnesses = []
-
     # initializing population
     for i in range(population_size):
         genes = []
@@ -296,17 +297,18 @@ def main():
 
     # evaluation
     for k in range(int(cal_fitness_num / population_size)):
+        # parents selection
         parents = parent_selection(population, parents_num, terminal_vertices_num, edges, edge_costs)
-        new_generation = crossover(parents, population_size, edge_num)
-        # mutation
-        new_generation.extend(population)
+        new_generation = crossover(parents, population_size, edge_num, pc)  # crossover
+        mutation(new_generation, pm)  # mutation
+        new_generation.extend(population)  # mu + lambda
+        # children selection for mu + lambda
         population = child_selection(new_generation, tournament_size, terminal_vertices_num, edges, edge_costs)
-        # for i in range(int(mutation_num)):
-        #     new_generation[randrange(0, len(new_generation))].mutation()
 
         # calculating fitnesses
         fitnesses.clear()
         for p in population:
+            print(p.gens, end=", ")
             fitnesses.append(p.fitness(terminal_vertices_num, edges, edge_costs))
 
         print("\nGeneration #" + str(k + 1) + ":")
