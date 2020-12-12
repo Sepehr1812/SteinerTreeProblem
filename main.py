@@ -353,7 +353,7 @@ def main():
             best_chromosome = p
 
     # printing results
-    print("\n\nTermination Condition Reached!")
+    print("\n\nStop Condition Reached!")
     print("The Best Chromosome Genome in the Last Generation is " + str(best_chromosome.gens))
 
     # creating final file
