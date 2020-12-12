@@ -5,6 +5,8 @@ from math import sqrt, log2
 from random import randrange, randint, uniform
 from typing import List
 
+import matplotlib.pyplot as plt
+
 
 class Chromosome:
     """
@@ -245,6 +247,34 @@ def create_result(chromosome: Chromosome, edges_cost: list):
     f.close()
 
 
+def draw_final_graph(all_vertices: list, terminal_vertices: list, edges: list, chromosome: Chromosome):
+    x = []
+    y = []
+    tx = []
+    ty = []
+
+    for v in terminal_vertices:
+        tx.append(v[0])
+        ty.append(v[1])
+
+    for i in range(len(chromosome.gens)):
+        if chromosome.gens[i] == 1:
+            e = edges[i]
+            v1 = all_vertices[int(e[0])]
+            v2 = all_vertices[int(e[1])]
+            x.append(v1[0])
+            x.append(v2[0])
+            y.append(v1[1])
+            y.append(v2[1])
+
+    plt.plot(x, y, color='blue', linewidth=0.5)  # plotting edges
+    plt.scatter(tx, ty, marker='o', color='red', s=30)  # scattering vertices
+    plt.xlim(0, 1000)
+    plt.ylim(0, 1000)
+
+    plt.show()
+
+
 def main():
     """
     the main function
@@ -264,7 +294,7 @@ def main():
     terminal_vertices_num: list  # numbers of terminal vertices
 
     # problem constants
-    cal_fitness_num = 1000
+    cal_fitness_num = 5000
     population_size = 50
     parents_num = 100  # number of parents in each parents selection
     tournament_size = 3
@@ -328,6 +358,7 @@ def main():
 
     # creating final file
     create_result(best_chromosome, edge_costs)
+    draw_final_graph(all_vertices, terminal_vertices, edges, best_chromosome)
 
 
 if __name__ == '__main__':
